@@ -852,10 +852,10 @@ function digest(seq, enzymes, fragselect) {
  * Based on the indices of the annealing sites, the final PCR product is calculated from the entire forward sequence, the region between the 
  * annealing regions on the rotated template, and the entire reverse complement of the reverse oligo
  *
- * @param {string} headOligoSeq - The head oligo sequence.
- * @param {string} tailOligoSeq - The tail oligo sequence.
- * @param {string} headTemplateSeq - The head template sequence.
- * @param {string} tailTemplateSeq - the tail template sequence.
+ * @param {string} headOligoSeq - The head oligo sequence with at least 18bp homology to the 5' end of the head template sequence.
+ * @param {string} tailOligoSeq - The tail oligo sequence with at least 18bp homology to the 3' end of the tail template sequence.
+ * @param {string} headTemplateSeq - The head template sequence with at least 20bp homology at the 3' end to the 5' end of the tail template sequence.
+ * @param {string} tailTemplateSeq - the tail template sequence with at least 20bp homology at the 5' end to the 3' end of the head template sequence.
  *
  * @returns {string} finalProduct - The predicted PCR product.
  */
@@ -920,6 +920,17 @@ function soe(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
     throw new Error("Head oligo does not exactly anneal to the Tail template")
   }
 
+  //Basic Assumptions:
+  //1. Previous PCR steps already integrated desired deletions and mutations with middle and end oligos to the template sequences in seperate pots
+  //2. The 3' end of HEAD is perfectly homologous to the 5' end of TAIL (We have big problems if not!)
+  //3. The end cap oligos at their 3' ends for HEAD and TAIL should be perfectly homologous to the 5' end of HEAD and 3' end of TAIL, but we should
+  //   complete extension of the final sequence to include any overhangs to maximize the use cases for this function
+  //   (i.e. people may want to do SOE with many sequences to splice them together, so the SOE function should not be an "end step" but instead
+  //    should allow chaining multiple SOE reactions)
+
+  //Step 4. Anneal the two template sequences using their homologies into one fusion sequence.
+
+  //Step 5. PCR normally with the head and tail oligos onto the fusion sequence.
 
   return finalProduct
 }
