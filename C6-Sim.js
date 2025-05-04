@@ -863,12 +863,12 @@ function soe(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
   try {
     headOligoSeq = resolveToSeq(headOligoSeq);
   } catch(err) {
-    throw new Error('PCR unable to parse forward primer');
+    throw new Error('PCR unable to parse head oligo primer');
   }
   try {
     tailOligoSeq = resolveToSeq(tailOligoSeq);
   } catch(err) {
-    throw new Error('PCR unable to parse reverse primer');
+    throw new Error('PCR unable to parse tail oligo primer');
   }
   try {
     headTemplateSeq = resolveToSeq(headTemplateSeq);
@@ -906,14 +906,14 @@ function soe(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
     }
   }
 
-  //Step 2. Verify that forwardOligoSeq has 18bp homology to 5' end of HeadSeq.
+  //Step 2. Verify that headOligoSeq has 18bp homology to 5' end of HeadSeq.
   var headAnneal = headOligoSeq.slice(-18);
   var headMatchIndex = headTemplateSeq.indexOf(headAnneal);
   if(headMatchIndex === -1) {
     throw new Error("Head oligo does not exactly anneal to the Head template")
   }
 
-  //Step 3. Verify that reverseOligoSeq has 18bp homology to 3' end of TailSeq.
+  //Step 3. Verify that headOligoSeq has 18bp homology to 3' end of TailSeq.
   var tailAnneal = tailOligoSeq.slice(-18);
   var tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
   if(tailMatchIndex === -1) {
