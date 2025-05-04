@@ -830,7 +830,7 @@ function digest(seq, enzymes, fragselect) {
 }
 
 /**
- * SOE function predicts the sequence of a SOE (Splice by Overhang Extension) product by inputting forward oligo sequence, reverse oligo sequence, and two template sequences.
+ * SOE function predicts the sequence of a SOE (Splice by Overhang Extension) product by inputting two template sequences (head and tail), as well as oligos for each.
  * The two template sequences must be designated either Head or Tail marking their position either 5' or 3' of the SOE joining site.
  *
  * The template sequences referenced in this function must be products of two previous PCR reactions:
@@ -852,21 +852,21 @@ function digest(seq, enzymes, fragselect) {
  * Based on the indices of the annealing sites, the final PCR product is calculated from the entire forward sequence, the region between the 
  * annealing regions on the rotated template, and the entire reverse complement of the reverse oligo
  *
- * @param {string} forwardOligoSeq - The forward oligo sequence.
- * @param {string} reverseOligoSeq - The reverse oligo sequence.
- * @param {string} headTemplateSeq - The forward template sequence.
- * @param {string} tailTemplateSeq - the reverse template sequence.
+ * @param {string} headOligoSeq - The head oligo sequence.
+ * @param {string} tailOligoSeq - The tail oligo sequence.
+ * @param {string} headTemplateSeq - The head template sequence.
+ * @param {string} tailTemplateSeq - the tail template sequence.
  *
  * @returns {string} finalProduct - The predicted PCR product.
  */
-function soe(forwardOligoSeq, reverseOligoSeq, headTemplateSeq, tailTemplateSeq) {
+function soe(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
   try {
-    forwardOligoSeq = resolveToSeq(forwardOligoSeq);
+    headOligoSeq = resolveToSeq(headOligoSeq);
   } catch(err) {
     throw new Error('PCR unable to parse forward primer');
   }
   try {
-    reverseOligoSeq = resolveToSeq(reverseOligoSeq);
+    tailOligoSeq = resolveToSeq(tailOligoSeq);
   } catch(err) {
     throw new Error('PCR unable to parse reverse primer');
   }
@@ -881,9 +881,9 @@ function soe(forwardOligoSeq, reverseOligoSeq, headTemplateSeq, tailTemplateSeq)
     throw new Error('PCR unable to parse trailing/tail template sequence');
   }
 
-  //Step 1. Verify that the first 18bp of tailTemplateSeq match the last 18bp of headTemplateSeq.
+  //Step 1. Verify that the first 20bp of tailTemplateSeq match the last 20bp of headTemplateSeq.
   //Correct orientation of strands should be (HEAD 5' > 3' TAIL 5' > 3')
-  var midAnneal = headTemplateSeq.slice(-18);
+  var midAnneal = headTemplateSeq.slice(-20);
   var midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
   if(midMatchIndex === -1) {
     // Check if tail template sequence needs to be rev comped (i.e. strands given are HEAD 5' > 3' TAIL 3' < 5')
@@ -892,47 +892,32 @@ function soe(forwardOligoSeq, reverseOligoSeq, headTemplateSeq, tailTemplateSeq)
     if(midMatchIndex == -1) {
       // check if head and tail are flip flopped (i.e. strands given are HEAD 3' < 5' TAIL 3' < 5')
       headTemplateSeq = revcomp(headTemplateSeq);
-      midAnneal = headTemplateSeq.slice(-18);
+      midAnneal = headTemplateSeq.slice(-20);
       midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
       if(midMatchIndex === -1) {
         // check if head needs to be rev comped given a correct tail orientation (i.e. strands given are HEAD 3' < 5' TAIL 5' > 3')
         tailTemplateSeq = revcomp(tailTemplateSeq);
         midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
         if(midMatchIndex === -1) {
-          //Now, we are very confident that there is no homology between the two sequences.
-          throw new Error("There are no valid homologous sequences at the ends of HEAD and TAIL.")
+          //Now, we are very confident that there is no homology between the two sequences that wouldn't cause a overhang.
+          throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and TAIL.")
         }
       }
     }
   }
-  //PROBLEM: MIDPOINT SPLICE SITE CAN BE MORE THAN 18BP HOMOLOGY!!!
-  else if(midMatchIndex != 0) {
-    // Any overhanging nucleotides in the splice site will prevent full polymerization of the strands so SOE cannot happen.
-    throw new Error("There is a overhang at HEAD 3' or TAIL 5'. Polymerization cannot continue from the splice point.")
-  }
 
   //Step 2. Verify that forwardOligoSeq has 18bp homology to 5' end of HeadSeq.
-  var headAnneal = forwardOligoSeq.slice(-18);
+  var headAnneal = headOligoSeq.slice(-18);
   var headMatchIndex = headTemplateSeq.indexOf(headAnneal);
-  //RICHIE: CHECK TO SEE IF THIS IS NEEDED AFTER CHANGES ABOVE OR IF ERROR SHOULD EXIST
   if(headMatchIndex === -1) {
-    headTemplateSeq = revcomp(headTemplateSeq);
-    headMatchIndex = headTemplateSeq.indexOf(headAnneal);
-    if(headMatchIndex === -1) {
-      throw new Error("Forward oligo does not exactly anneal to the Head template")
-    }
+    throw new Error("Head oligo does not exactly anneal to the Head template")
   }
 
   //Step 3. Verify that reverseOligoSeq has 18bp homology to 3' end of TailSeq.
-  var tailAnneal = reverseOligoSeq.slice(-18);
+  var tailAnneal = tailOligoSeq.slice(-18);
   var tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
-  //RICHIE: CHECK TO SEE IF THIS IS NEEDED AFTER CHANGES ABOVE OR IF ERROR SHOULD BE BOUNCED
   if(tailMatchIndex === -1) {
-    tailTemplateSeq = revcomp(tailTemplateSeq);
-    tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
-    if(tailMatchIndex === -1) {
-      throw new Error("Reverse oligo does not exactly anneal to the Tail template")
-    }
+    throw new Error("Head oligo does not exactly anneal to the Tail template")
   }
 
 
