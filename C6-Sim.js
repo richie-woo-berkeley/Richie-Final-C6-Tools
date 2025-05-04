@@ -881,6 +881,60 @@ function soe(forwardOligoSeq, reverseOligoSeq, headTemplateSeq, tailTemplateSeq)
     throw new Error('PCR unable to parse trailing/tail template sequence');
   }
 
+  //Step 1. Verify that the first 18bp of tailTemplateSeq match the last 18bp of headTemplateSeq.
+  //Correct orientation of strands should be (HEAD 5' > 3' TAIL 5' > 3')
+  var midAnneal = headTemplateSeq.slice(-18);
+  var midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
+  if(midMatchIndex === -1) {
+    // Check if tail template sequence needs to be rev comped (i.e. strands given are HEAD 5' > 3' TAIL 3' < 5')
+    tailTemplateSeq = revcomp(tailTemplateSeq);
+    midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
+    if(midMatchIndex == -1) {
+      // check if head and tail are flip flopped (i.e. strands given are HEAD 3' < 5' TAIL 3' < 5')
+      headTemplateSeq = revcomp(headTemplateSeq);
+      midAnneal = headTemplateSeq.slice(-18);
+      midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
+      if(midMatchIndex === -1) {
+        // check if head needs to be rev comped given a correct tail orientation (i.e. strands given are HEAD 3' < 5' TAIL 5' > 3')
+        tailTemplateSeq = revcomp(tailTemplateSeq);
+        midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
+        if(midMatchIndex === -1) {
+          //Now, we are very confident that there is no homology between the two sequences.
+          throw new Error("There are no valid homologous sequences at the ends of HEAD and TAIL.")
+        }
+      }
+    }
+  }
+  else if(midMatchIndex != 0) {
+    // Any overhanging nucleotides in the splice site will prevent full polymerization of the strands so SOE cannot happen.
+    throw new Error("There is a overhang at HEAD 3' or TAIL 5'. Polymerization cannot continue from the splice point.")
+  }
+
+  //Step 2. Verify that forwardOligoSeq has 18bp homology to 5' end of HeadSeq.
+  var headAnneal = forwardOligoSeq.slice(-18);
+  var headMatchIndex = headTemplateSeq.indexOf(headAnneal);
+  //RICHIE: CHECK TO SEE IF THIS IS NEEDED AFTER CHANGES ABOVE OR IF ERROR SHOULD EXIST
+  if(headMatchIndex === -1) {
+    headTemplateSeq = revcomp(headTemplateSeq);
+    headMatchIndex = headTemplateSeq.indexOf(headAnneal);
+    if(headMatchIndex === -1) {
+      throw new Error("Forward oligo does not exactly anneal to the Head template")
+    }
+  }
+
+  //Step 3. Verify that reverseOligoSeq has 18bp homology to 3' end of TailSeq.
+  var tailAnneal = reverseOligoSeq.slice(-18);
+  var tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
+  //RICHIE: CHECK TO SEE IF THIS IS NEEDED AFTER CHANGES ABOVE OR IF ERROR SHOULD BE BOUNCED
+  if(tailMatchIndex === -1) {
+    tailTemplateSeq = revcomp(tailTemplateSeq);
+    tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
+    if(tailMatchIndex === -1) {
+      throw new Error("Reverse oligo does not exactly anneal to the Tail template")
+    }
+  }
+
+
   return finalProduct
 }
 
