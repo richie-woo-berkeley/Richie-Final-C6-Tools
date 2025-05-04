@@ -172,7 +172,8 @@ function parseCF(...blobs) {
         "gibson": "Assemble",
         "goldengate": "Assemble",
         "blunt": "Blunt",
-        "transform": "Transform"
+        "transform": "Transform",
+        "soe": "SOE"
     };
 
     const sequenceDataRegex = /^[ACGTRYSWKMBDHVNUacgtryswkmbdhvnu*]+$/;
@@ -251,6 +252,13 @@ function parseCF(...blobs) {
                         step.strain = tokens[2];
                         step.antibiotics = tokens[3];
                         step.temperature = parseFloat(tokens[5]);
+                        break;
+                    case "soe":
+                        step.output = tokens[5];
+                        step.forward_oligo = tokens[1];
+                        step.reverse_oligo = tokens[2];
+                        step.forward_template = tokens[3];
+                        step.reverse_template = tokens[4];
                         break;
                 }
             }
@@ -819,6 +827,61 @@ function digest(seq, enzymes, fragselect) {
 	} else {
 		throw new Error("Invalid fragselect provided");
 	}
+}
+
+/**
+ * SOE function predicts the sequence of a SOE (Splice by Overhang Extension) product by inputting forward oligo sequence, reverse oligo sequence, and two template sequences.
+ * The two template sequences must be designated either Head or Tail marking their position either 5' or 3' of the SOE joining site.
+ *
+ * The template sequences referenced in this function must be products of two previous PCR reactions:
+ * 1. PCR with a polynucleotide (PolyHead), an oligo matching at least 18bp near the 5' of Poly1 (Oligo-F), and another oligo matching 18bp near the 3' of Poly1 (Oligo-MF);
+ * 2. PCR with a polynucleotide (PolyTail), an oligo matching at least 18bp near the 3' of Poly2 (Oligo-R), and another oligo matching 18bp near the 5' of Poly2 (Oligo-MR);
+ * The following must be true of Oligo-F and Oligo-R:
+ * 1. Their 3' ends must be complementary to a minimum of 18bp near the 5' end for Oligo-F and PolyHead and 3' end of PolyTail
+ * The following must be true of Oligo-MF and Oligo-MR:
+ * 1. There must be 18 bp homology between the oligo and the 3' end of PolyHead, and 18bp homology to the 5' end of PolyTail.
+ * 
+ * The algorithm is written assuming the forward and reverse oligos will bind to the 5' end of the head and 3' end of the tail respectively.
+ * 
+ * --- Update for below needed, copied from "PCR" description ---
+ * The function first identifies where the forward oligo will anneal to the template by looking for the 18 bp match.
+ * It then rotates the template sequence such that it begins with the annealing region of the forward oligo.
+ * Then it looks for the annealing site of the reverse oligo by invoking the function revcomp(sequence) which inputs the reverse oligo sequence 
+ * and outputs the reverse complement. 
+ * The first 18 bp of that revcomp sequence should match the template where it will anneal.
+ * Based on the indices of the annealing sites, the final PCR product is calculated from the entire forward sequence, the region between the 
+ * annealing regions on the rotated template, and the entire reverse complement of the reverse oligo
+ *
+ * @param {string} forwardOligoSeq - The forward oligo sequence.
+ * @param {string} reverseOligoSeq - The reverse oligo sequence.
+ * @param {string} headTemplateSeq - The forward template sequence.
+ * @param {string} tailTemplateSeq - the reverse template sequence.
+ *
+ * @returns {string} finalProduct - The predicted PCR product.
+ */
+function soe(forwardOligoSeq, reverseOligoSeq, headTemplateSeq, tailTemplateSeq) {
+  try {
+    forwardOligoSeq = resolveToSeq(forwardOligoSeq);
+  } catch(err) {
+    throw new Error('PCR unable to parse forward primer');
+  }
+  try {
+    reverseOligoSeq = resolveToSeq(reverseOligoSeq);
+  } catch(err) {
+    throw new Error('PCR unable to parse reverse primer');
+  }
+  try {
+    headTemplateSeq = resolveToSeq(headTemplateSeq);
+  } catch(err) {
+    throw new Error('PCR unable to parse leading/head template sequence');
+  }
+  try {
+    tailTemplateSeq = resolveToSeq(tailTemplateSeq);
+  } catch(err) {
+    throw new Error('PCR unable to parse trailing/tail template sequence');
+  }
+
+  return finalProduct
 }
 
 /**
