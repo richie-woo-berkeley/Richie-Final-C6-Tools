@@ -905,6 +905,7 @@ function soe(forwardOligoSeq, reverseOligoSeq, headTemplateSeq, tailTemplateSeq)
       }
     }
   }
+  //PROBLEM: MIDPOINT SPLICE SITE CAN BE MORE THAN 18BP HOMOLOGY!!!
   else if(midMatchIndex != 0) {
     // Any overhanging nucleotides in the splice site will prevent full polymerization of the strands so SOE cannot happen.
     throw new Error("There is a overhang at HEAD 3' or TAIL 5'. Polymerization cannot continue from the splice point.")
