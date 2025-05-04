@@ -881,12 +881,12 @@ function soe(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
     throw new Error('PCR unable to parse trailing/tail template sequence');
   }
 
-  //Step 1. Verify that the first 20bp of tailTemplateSeq match the last 20bp of headTemplateSeq.
+  //Step 1. Verify that a minimum 20bp homology exists between the 3' end of HEAD and 5' end of TAIL.
   //Correct orientation of strands should be (HEAD 5' > 3' TAIL 5' > 3')
   var midAnneal = headTemplateSeq.slice(-20);
   var midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
   if(midMatchIndex === -1) {
-    // Check if tail template sequence needs to be rev comped (i.e. strands given are HEAD 5' > 3' TAIL 3' < 5')
+    // Check if tail template sequence needs to be rev comped given a correct head orientation (i.e. strands given are HEAD 5' > 3' TAIL 3' < 5')
     tailTemplateSeq = revcomp(tailTemplateSeq);
     midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
     if(midMatchIndex == -1) {
@@ -899,7 +899,7 @@ function soe(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
         tailTemplateSeq = revcomp(tailTemplateSeq);
         midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
         if(midMatchIndex === -1) {
-          //Now, we are very confident that there is no homology between the two sequences that wouldn't cause a overhang.
+          //Now, we are very confident that there is no homology between the two sequences that wouldn't cause an illegal overhang.
           throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and TAIL.")
         }
       }
