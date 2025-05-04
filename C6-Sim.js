@@ -255,10 +255,10 @@ function parseCF(...blobs) {
                         break;
                     case "soe":
                         step.output = tokens[5];
-                        step.forward_oligo = tokens[1];
-                        step.reverse_oligo = tokens[2];
-                        step.forward_template = tokens[3];
-                        step.reverse_template = tokens[4];
+                        step.head_oligo = tokens[1];
+                        step.tail_oligo = tokens[2];
+                        step.head_template = tokens[3];
+                        step.tail_template = tokens[4];
                         break;
                 }
             }
@@ -859,7 +859,7 @@ function digest(seq, enzymes, fragselect) {
  *
  * @returns {string} finalProduct - The predicted PCR product.
  */
-function soe(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
+function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
   try {
     headOligoSeq = resolveToSeq(headOligoSeq);
   } catch(err) {
@@ -1007,6 +1007,20 @@ function simCF(jsonString) {
               products.push({
                   name: step.output,
                   sequence: product
+              });
+            }
+            break;
+
+            case 'SOE': {
+              const headOligoSeq = lookupSequence(step.head_oligo);
+              const tailOligoSeq = lookupSequence(step.tail_oligo);
+              const headTemplateSeq = lookupSequence(step.head_template);
+              const tailTemplateSeq = lookupSequence(step.tail_template);
+
+              const product = SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq);
+              products.push({
+                name: step.output,
+                sequence: product
               });
             }
             break;
