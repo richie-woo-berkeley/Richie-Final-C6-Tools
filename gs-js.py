@@ -14,4 +14,4 @@ def js_to_gs():
         os.rename(file, file.replace("js", "gs"))
     return
 
-js_to_gs()
+gs_to_js()
