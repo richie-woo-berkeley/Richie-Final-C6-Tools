@@ -842,15 +842,13 @@ function digest(seq, enzymes, fragselect) {
  * 1. There must be 18 bp homology between the oligo and the 3' end of PolyHead, and 18bp homology to the 5' end of PolyTail.
  * 
  * The algorithm is written assuming the forward and reverse oligos will bind to the 5' end of the head and 3' end of the tail respectively.
- * 
- * --- Update for below needed, copied from "PCR" description ---
- * The function first identifies where the forward oligo will anneal to the template by looking for the 18 bp match.
- * It then rotates the template sequence such that it begins with the annealing region of the forward oligo.
- * Then it looks for the annealing site of the reverse oligo by invoking the function revcomp(sequence) which inputs the reverse oligo sequence 
- * and outputs the reverse complement. 
- * The first 18 bp of that revcomp sequence should match the template where it will anneal.
- * Based on the indices of the annealing sites, the final PCR product is calculated from the entire forward sequence, the region between the 
- * annealing regions on the rotated template, and the entire reverse complement of the reverse oligo
+ * The algorithm is written assuming there are no overhanging sections of the head-tail template homology site, 3' for the head and 5' for the tail.
+ * Like the PCR function, the algorithm assumes that the last 18 bp on the 3' end of the oligos exactly match the template, but the 5' end of the oligos may not match.
+ * The function first verifies that a minimum 20bp homology exists between the 3' end of the head template and 5' end of the tail template.
+ * The function will rotate the head and tail template sequences to attempt to find a match if a match is not detected in the as-given sequences.
+ * The function then attempts to find homologies between the head oligo and the head template, and the tail oligo and the tail template.
+ * When the above steps check out, the function then fuses the head template sequence and tail template sequences into one fusion product according to the homology overlap.
+ * Then, the function will perform the PCR function on the fusion product with the head and tail oligos to complete the SOE.
  *
  * @param {string} headOligoSeq - The head oligo sequence with at least 18bp homology to the 5' end of the head template sequence.
  * @param {string} tailOligoSeq - The tail oligo sequence with at least 18bp homology to the 3' end of the tail template sequence.
