@@ -949,11 +949,11 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
     //throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and the start of TAIL.")
   } else {
     //Step 4.5. If all is well, merge the sequences into a new var.
-    var annealTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
+    var fusionTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
   }
 
   //Step 5. PCR normally with the head and tail oligos onto the fusion sequence.
-  var finalProduct = PCR(headOligoSeq, tailOligoSeq, annealTemplateSeq)
+  var finalProduct = PCR(headOligoSeq, tailOligoSeq, fusionTemplateSeq)
 
   return finalProduct
 }
