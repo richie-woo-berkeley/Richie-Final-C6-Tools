@@ -1,6 +1,6 @@
 /**
  * @file C6-Sim.gs
- * @author J. Christopher Anderson with ChatGPT
+ * @author J. Christopher Anderson with ChatGPT and Richie Woo
  * @copyright 2023 University of California, Berkeley
  * @license See the LICENSE file included in the repository
  * @version 1.0.0
