@@ -13,3 +13,5 @@ def js_to_gs():
     for file in dir_list:
         os.rename(file, file.replace("js", "gs"))
     return
+
+js_to_gs()
