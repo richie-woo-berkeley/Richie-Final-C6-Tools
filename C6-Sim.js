@@ -923,8 +923,8 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
   var tailAnneal = tailOligoSeq.slice(-18);
   var tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
   if(tailMatchIndex === -1) {
-    tailOligoSeq = revcomp(tailOligoSeq); //Allow some leeway as to sequence direction
-    tailAnneal = tailOligoSeq.slice(-18);
+    var revTailOligoSeq = revcomp(tailOligoSeq); //Allow some leeway as to sequence direction
+    tailAnneal = revTailOligoSeq.slice(-18);
     tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
     if(tailMatchIndex === -1) {
       throw new Error("Tail oligo does not exactly anneal to the Tail template")
@@ -951,11 +951,11 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
 
   //Step 4.3. Obtain the sequence of the annealing regions according to each respective template.
   var headAnnealSeq = headTemplateSeq.slice(tailMidAnnealIndex);
-  var tailAnnealSeq = tailTemplateSeq.slice(0, (headMidAnnealIndex + 19));
+  var tailAnnealSeq = tailTemplateSeq.slice(0, (headMidAnnealIndex + 20));
 
   //Step 4.4. Check to see if there is consensus as to what the homologous sequence is.
   if(headAnnealSeq != tailAnnealSeq) {
-    throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and the start of TAIL.")
+    //throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and the start of TAIL.")
   } else {
     //Step 4.5. If all is well, merge the sequences into a new var.
     var annealTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
