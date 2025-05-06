@@ -911,24 +911,15 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
   var headAnneal = headOligoSeq.slice(-18);
   var headMatchIndex = headTemplateSeq.indexOf(headAnneal);
   if(headMatchIndex === -1) {
-    headOligoSeq = revcomp(headOligoSeq); //Allow some leeway as to sequence direction
-    headAnneal = headOligoSeq.slice(-18);
-    headMatchIndex = headTemplateSeq.indexOf(headAnneal);
-    if(headMatchIndex === -1) {
-      throw new Error("Head oligo does not exactly anneal to the Head template")
-    }
+    throw new Error("Head oligo does not exactly anneal to the Head template")
   }
 
   //Step 3. Verify that tailOligoSeq has minimum 18bp homology to 3' end of TailSeq.
-  var tailAnneal = tailOligoSeq.slice(-18);
+  var revTailOligoSeq = revcomp(tailOligoSeq);
+  var tailAnneal = revTailOligoSeq.slice(-18);
   var tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
   if(tailMatchIndex === -1) {
-    var revTailOligoSeq = revcomp(tailOligoSeq); //Allow some leeway as to sequence direction
-    tailAnneal = revTailOligoSeq.slice(-18);
-    tailMatchIndex = tailTemplateSeq.indexOf(tailAnneal);
-    if(tailMatchIndex === -1) {
-      throw new Error("Tail oligo does not exactly anneal to the Tail template")
-    }
+    throw new Error("Reverse Complement of tail oligo does not exactly anneal to the Tail template")
   }
 
   //Basic Assumptions:
