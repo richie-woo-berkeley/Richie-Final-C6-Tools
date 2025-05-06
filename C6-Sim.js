@@ -946,7 +946,7 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
 
   //Step 4.4. Check to see if there is consensus as to what the homologous sequence is.
   if(headAnnealSeq != tailAnnealSeq) {
-    //throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and the start of TAIL.")
+    throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and the start of TAIL.")
   } else {
     //Step 4.5. If all is well, merge the sequences into a new var.
     var fusionTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
