@@ -882,6 +882,7 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
   }
 
   //Step 1. Verify that a minimum 20bp homology exists between the 3' end of HEAD and 5' end of TAIL.
+  //These checks should automatically rotate HEAD and TAIL to be in the correct orientations.
   //Correct orientation of strands should be (HEAD 5' > 3' TAIL 5' > 3')
   var midAnneal = headTemplateSeq.slice(-20);
   var midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
@@ -900,7 +901,7 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
         midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
         if(midMatchIndex === -1) {
           //Now, we are very confident that there is no homology between the two sequences that wouldn't cause an illegal overhang.
-          throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and TAIL.")
+          throw new Error("There are no valid homologous sequences at the ends of HEAD and the start of TAIL.")
         }
       }
     }
@@ -930,7 +931,28 @@ function SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq) {
 
   //Step 4. Anneal the two template sequences using their homologies into one fusion sequence.
 
+  //Step 4.1. Find the annealing regions of HEAD and TAIL.
+  var headMidAnneal = headTemplateSeq.slice(-20); //Although this is available as midAnneal above I want to regenerate it
+  var tailMidAnneal = tailTemplateSeq.slice(0, 19);
+
+  //Step 4.2. Find the indices of the positions where HEAD and TAIL anneal to each other.
+  var headMidAnnealIndex = tailTemplateSeq.indexOf(headMidAnneal);
+  var tailMidAnnealIndex = headTemplateSeq.lastIndexOf(tailMidAnneal);
+
+  //Step 4.3. Obtain the sequence of the annealing regions according to each respective template.
+  var headAnnealSeq = headTemplateSeq.slice(tailMidAnnealIndex);
+  var tailAnnealSeq = tailTemplateSeq.slice(0, (headMidAnnealIndex + 19));
+
+  //Step 4.4. Check to see if there is consensus as to what the homologous sequence is.
+  if(headAnnealSeq != tailAnnealSeq) {
+    throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and the start of TAIL.")
+  } else {
+    //Step 4.5. If all is well, merge the sequences into a new var.
+    var annealTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
+  }
+
   //Step 5. PCR normally with the head and tail oligos onto the fusion sequence.
+  var finalProduct = PCR(headOligoSeq, tailOligoSeq, annealTemplateSeq)
 
   return finalProduct
 }
