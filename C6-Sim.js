@@ -254,10 +254,10 @@ function parseCF(...blobs) {
                         step.temperature = parseFloat(tokens[5]);
                         break;
                     case "soe":
-                        step.output = tokens[-1];
+                        step.output = tokens[tokens.length - 1];
                         step.head_oligo = tokens[1];
                         step.tail_oligo = tokens[2];
-                        step.templates = tokens.slice(3, -2);
+                        step.templates = tokens.slice(3, tokens.length - 1);
                         break;
                 }
             }
@@ -856,7 +856,7 @@ function digest(seq, enzymes, fragselect) {
  *
  * @returns {string} finalProduct - The predicted PCR product.
  */
-function SOE(headOligoSeq, tailOligoSeq, ...templateSeqs) {
+function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   try {
     headOligoSeq = resolveToSeq(headOligoSeq);
   } catch(err) {
@@ -946,25 +946,24 @@ function SOE(headOligoSeq, tailOligoSeq, ...templateSeqs) {
   //Step 0. Loop over templates and join A to B, AB to C, ABC to D, infinitely and forever ad nauseam.
   for (let index = 1; index < templateSeqs.length; index++) {
     let tailTemplateSeq = templateSeqs[index];
-    let headTemplateSeq = SOEAnnealByHomology(headTemplateSeq, tailTemplateSeq, index)
+    headTemplateSeq = SOEAnnealByHomology(headTemplateSeq, tailTemplateSeq, index);
   }
 
-  let fusionTemplateSeq = headTemplateSeq;
+  let fusionTemplateSeq = headTemplateSeq; //I had plans for an expansion of this but probably won't get to it
 
-
-  //Step 2. Verify that headOligoSeq has minimum 18bp homology to 5' end of fusionTemplateSeq.
+  //Step 3. Verify that headOligoSeq has minimum 18bp homology to 5' end of fusionTemplateSeq.
   var headAnneal = headOligoSeq.slice(-18);
   var headMatchIndex = fusionTemplateSeq.indexOf(headAnneal);
   if(headMatchIndex === -1) {
     throw new Error("Head oligo does not exactly anneal to the Head template")
   }
 
-  //Step 3. Verify that tailOligoSeq has minimum 18bp homology to 3' end of fusionTemplateSeq.
+  //Step 4. Verify that tailOligoSeq has minimum 18bp homology to 3' end of fusionTemplateSeq.
   var revTailOligoSeq = revcomp(tailOligoSeq);
-  var tailAnneal = revTailOligoSeq.slice(-18);
+  var tailAnneal = revTailOligoSeq.slice(0, 19);
   var tailMatchIndex = fusionTemplateSeq.indexOf(tailAnneal);
   if(tailMatchIndex === -1) {
-    throw new Error("Reverse Complement of tail oligo does not exactly anneal to the Tail template")
+    throw new Error("Tail oligo does not exactly anneal to the Tail template")
   }
 
   //Basic Assumptions:
@@ -1060,9 +1059,14 @@ function simCF(jsonString) {
             case 'SOE': {
               const headOligoSeq = lookupSequence(step.head_oligo);
               const tailOligoSeq = lookupSequence(step.tail_oligo);
-              const templateSeqs = lookupSequence(step.templates);
+              let templateSeqs = [];
+              let templates = String(step.templates).split(",");
+              
+              for (let index = 0; index < templates.length; index++) {
+                templateSeqs.push(lookupSequence(templates[index]));
+              }
 
-              const product = SOE(headOligoSeq, tailOligoSeq, ...templateSeqs);
+              const product = SOE(headOligoSeq, tailOligoSeq, templateSeqs);
               products.push({
                 name: step.output,
                 sequence: product
