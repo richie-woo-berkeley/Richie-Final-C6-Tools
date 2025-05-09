@@ -1060,10 +1060,9 @@ function simCF(jsonString) {
             case 'SOE': {
               const headOligoSeq = lookupSequence(step.head_oligo);
               const tailOligoSeq = lookupSequence(step.tail_oligo);
-              const headTemplateSeq = lookupSequence(step.head_template);
-              const tailTemplateSeq = lookupSequence(step.tail_template);
+              const templateSeqs = lookupSequence(step.templates);
 
-              const product = SOE(headOligoSeq, tailOligoSeq, headTemplateSeq, tailTemplateSeq);
+              const product = SOE(headOligoSeq, tailOligoSeq, ...templateSeqs);
               products.push({
                 name: step.output,
                 sequence: product
