@@ -870,7 +870,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
 
   for (let i = 0; i < templateSeqs.length; i++) {
     try {
-      testTemplateSeq = resolveToSeq(templateSeqs[i]);
+      var testTemplateSeq = resolveToSeq(templateSeqs[i]);
     } catch(err) {
       throw new Error('PCR unable to parse template #' + i)
     }
@@ -951,6 +951,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
 
   let fusionTemplateSeq = headTemplateSeq; //I had plans for an expansion of this but probably won't get to it
 
+  /*
   //Step 3. Verify that headOligoSeq has minimum 18bp homology to 5' end of fusionTemplateSeq.
   var headAnneal = headOligoSeq.slice(-18);
   var headMatchIndex = fusionTemplateSeq.indexOf(headAnneal);
@@ -965,6 +966,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   if(tailMatchIndex === -1) {
     throw new Error("Tail oligo does not exactly anneal to the Tail template")
   }
+    */
 
   //Basic Assumptions:
   //1. Previous PCR steps already integrated desired deletions and mutations with middle and end oligos to the template sequences in seperate pots
