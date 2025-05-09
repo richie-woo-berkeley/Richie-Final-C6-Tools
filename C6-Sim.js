@@ -831,6 +831,8 @@ function digest(seq, enzymes, fragselect) {
 /**
  * SOE function predicts the sequence of a SOE (Splice by Overhang Extension) product by inputting two template sequences (head and tail), as well as oligos for each.
  * The two template sequences must be designated either Head or Tail marking their position either 5' or 3' of the SOE joining site.
+ * 
+ * Terminology clarification: The "Head" template is the first template in the given list, and the "Tail" template is the last template in the given list.
  *
  * The template sequences referenced in this function must be products of two previous PCR reactions:
  * 1. PCR with a polynucleotide (PolyHead), an oligo matching at least 18bp near the 5' of Poly1 (Oligo-F), and another oligo matching 18bp near the 3' of Poly1 (Oligo-MF);
@@ -849,10 +851,9 @@ function digest(seq, enzymes, fragselect) {
  * When the above steps check out, the function then fuses the head template sequence and tail template sequences into one fusion product according to the homology overlap.
  * Then, the function will perform the PCR function on the fusion product with the head and tail oligos to complete the SOE.
  *
- * @param {string} headOligoSeq - The head oligo sequence with at least 18bp homology to the 5' end of the head template sequence.
- * @param {string} tailOligoSeq - The tail oligo sequence with at least 18bp homology to the 3' end of the tail template sequence.
- * @param {string} headTemplateSeq - The head template sequence with at least 20bp homology at the 3' end to the 5' end of the tail template sequence.
- * @param {string} tailTemplateSeq - the tail template sequence with at least 20bp homology at the 5' end to the 3' end of the head template sequence.
+ * @param {string} headOligoSeq - The forward oligo sequence with at least 18bp homology to the 5' end of the first template sequence.
+ * @param {string} tailOligoSeq - The reverse oligo sequence with at least 18bp homology to the 3' end of the last template sequence.
+ * @param {array} templateSeqs - A list of template sequences which will be joined in order according to their homology sites.
  *
  * @returns {string} finalProduct - The predicted PCR product.
  */
@@ -860,12 +861,12 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   try {
     headOligoSeq = resolveToSeq(headOligoSeq);
   } catch(err) {
-    throw new Error('PCR unable to parse head oligo primer');
+    throw new Error('PCR unable to parse forward oligo primer');
   }
   try {
     tailOligoSeq = resolveToSeq(tailOligoSeq);
   } catch(err) {
-    throw new Error('PCR unable to parse tail oligo primer');
+    throw new Error('PCR unable to parse reverse oligo primer');
   }
 
   for (let i = 0; i < templateSeqs.length; i++) {
@@ -875,18 +876,6 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
       throw new Error('PCR unable to parse template #' + i)
     }
   }
-  /*
-  try {
-    headTemplateSeq = resolveToSeq(headTemplateSeq);
-  } catch(err) {
-    throw new Error('PCR unable to parse leading/head template sequence');
-  }
-  try {
-    tailTemplateSeq = resolveToSeq(tailTemplateSeq);
-  } catch(err) {
-    throw new Error('PCR unable to parse trailing/tail template sequence');
-  }
-  */
 
   function SOEAnnealByHomology(headTemplateSeq, tailTemplateSeq, index) {
     //Step 1. Verify that a minimum 20bp homology exists between the 3' end of HEAD and 5' end of TAIL.
@@ -909,7 +898,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
           midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
           if(midMatchIndex === -1) {
             //Now, we are very confident that there is no homology between the two sequences that wouldn't cause an illegal overhang.
-            throw new Error("There are no valid homologous sequences at the ends of templates " + (index).toString() + " and " + (index+1).toString())
+            throw new Error("There are no valid homologous sequences at the ends of templates " + (index - 1).toString() + " and " + (index).toString())
           }
         }
       }
@@ -931,7 +920,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
 
     //Step 2.4. Check to see if there is consensus as to what the homologous sequence is.
     if(headAnnealSeq != tailAnnealSeq) {
-      throw new Error("There are no valid non overhanging homologous sequences at the ends of HEAD and the start of TAIL.")
+      throw new Error("There are no valid non overhanging homologous sequences at the ends of templates " + (index - 1).toString() + " and " + (index).toString())
     } else {
       //Step 2.5. If all is well, merge the sequences into a new var.
       var fusionTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
@@ -951,22 +940,20 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
 
   let fusionTemplateSeq = headTemplateSeq; //I had plans for an expansion of this but probably won't get to it
 
-  /*
   //Step 3. Verify that headOligoSeq has minimum 18bp homology to 5' end of fusionTemplateSeq.
   var headAnneal = headOligoSeq.slice(-18);
   var headMatchIndex = fusionTemplateSeq.indexOf(headAnneal);
   if(headMatchIndex === -1) {
-    throw new Error("Head oligo does not exactly anneal to the Head template")
+    throw new Error("Forward oligo does not exactly anneal to the first template")
   }
 
   //Step 4. Verify that tailOligoSeq has minimum 18bp homology to 3' end of fusionTemplateSeq.
   var revTailOligoSeq = revcomp(tailOligoSeq);
-  var tailAnneal = revTailOligoSeq.slice(0, 19);
+  var tailAnneal = revTailOligoSeq.slice(0, 18);
   var tailMatchIndex = fusionTemplateSeq.indexOf(tailAnneal);
   if(tailMatchIndex === -1) {
-    throw new Error("Tail oligo does not exactly anneal to the Tail template")
+    throw new Error("Reverse oligo does not exactly anneal to the last template")
   }
-    */
 
   //Basic Assumptions:
   //1. Previous PCR steps already integrated desired deletions and mutations with middle and end oligos to the template sequences in seperate pots
@@ -977,7 +964,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   //    should allow chaining multiple SOE reactions)
 
   //Step 5. PCR normally with the head and tail oligos onto the fusion sequence.
-  var finalProduct = PCR(headOligoSeq, tailOligoSeq, fusionTemplateSeq)
+  var finalProduct = PCR(headOligoSeq, tailOligoSeq, fusionTemplateSeq);
 
   return finalProduct
 }
