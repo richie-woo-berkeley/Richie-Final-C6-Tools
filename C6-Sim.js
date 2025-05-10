@@ -908,12 +908,22 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
 
     //Step 2.1. Find the annealing regions of HEAD and TAIL.
     var headMidAnneal = headTemplateSeq.slice(-20); //Although this is available as midAnneal above I want to regenerate it
-    var tailMidAnneal = tailTemplateSeq.slice(0, 19);
+    var tailMidAnneal = tailTemplateSeq.slice(0, 20);
 
     //Step 2.2. Find the indices of the positions where HEAD and TAIL anneal to each other.
+    //Step 2.2.1. Find where HEAD anneals to TAIL.
     var headMidAnnealIndex = tailTemplateSeq.indexOf(headMidAnneal);
-    var tailMidAnnealIndex = headTemplateSeq.lastIndexOf(tailMidAnneal);
-
+    //Step 2.2.2. Find how many times TAIL anneals to HEAD.
+    const tailAnnealCount = (headTemplateSeq.match(new RegExp(tailMidAnneal, "g")) || []).length;
+    //Step 2.2.3. Verify that 5' homology region of TAIL only anneals to HEAD once, and generate index of anneal location. Otherwise, error.
+    if(tailAnnealCount === 1) {
+      var tailMidAnnealIndex = headTemplateSeq.lastIndexOf(tailMidAnneal);
+    } else if(tailAnnealCount === 0) {
+      throw new Error("Template #" + index + " has no homology to any previous templates.")
+    } else {
+      throw new Error("Template #" + index + " has 20bp homology to multiple templates; products will not SOE as desired.")
+    }
+    
     //Step 2.3. Obtain the sequence of the annealing regions according to each respective template.
     var headAnnealSeq = headTemplateSeq.slice(tailMidAnnealIndex);
     var tailAnnealSeq = tailTemplateSeq.slice(0, (headMidAnnealIndex + 20));
