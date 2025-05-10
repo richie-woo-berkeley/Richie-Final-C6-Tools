@@ -898,7 +898,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
           midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
           if(midMatchIndex === -1) {
             //Now, we are very confident that there is no homology between the two sequences that wouldn't cause an illegal overhang.
-            throw new Error("There are no valid homologous sequences at the ends of templates " + (index - 1).toString() + " and " + (index).toString())
+            throw new Error("There are no valid homologous sequences at the ends of templates " + (index).toString() + " and " + (index + 1).toString())
           }
         }
       }
@@ -919,9 +919,9 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
     if(tailAnnealCount === 1) {
       var tailMidAnnealIndex = headTemplateSeq.lastIndexOf(tailMidAnneal);
     } else if(tailAnnealCount === 0) {
-      throw new Error("Template #" + index + " has no homology to any previous templates.")
+      throw new Error("Template #" + (index + 1).toString() + " has no homology to any previous templates.")
     } else {
-      throw new Error("Template #" + index + " has 20bp homology to multiple templates; products will not SOE as desired.")
+      throw new Error("Template #" + (index + 1).toString() + " has 20bp homology to multiple templates; products will not SOE as desired.")
     }
     
     //Step 2.3. Obtain the sequence of the annealing regions according to each respective template.
@@ -930,7 +930,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
 
     //Step 2.4. Check to see if there is consensus as to what the homologous sequence is.
     if(headAnnealSeq != tailAnnealSeq) {
-      throw new Error("There are no valid non overhanging homologous sequences at the ends of templates " + (index - 1).toString() + " and " + (index).toString())
+      throw new Error("There are no valid non overhanging homologous sequences at the ends of templates " + (index).toString() + " and " + (index + 1).toString())
     } else {
       //Step 2.5. If all is well, merge the sequences into a new var.
       var fusionTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
