@@ -875,20 +875,20 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
     //Correct orientation of strands should be (HEAD 5' > 3' TAIL 5' > 3')
     var midAnneal = headTemplateSeq.slice(-15);
     var midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
-    if(midMatchIndex === -1) {
+    if (midMatchIndex === -1) {
       // Check if tail template sequence needs to be rev comped given a correct head orientation (i.e. strands given are HEAD 5' > 3' TAIL 3' < 5')
       tailTemplateSeq = revcomp(tailTemplateSeq);
       midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
-      if(midMatchIndex === -1) {
+      if (midMatchIndex === -1) {
         // check if head and tail are flip flopped (i.e. strands given are HEAD 3' < 5' TAIL 3' < 5')
         headTemplateSeq = revcomp(headTemplateSeq);
         midAnneal = headTemplateSeq.slice(-15);
         midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
-        if(midMatchIndex === -1) {
+        if (midMatchIndex === -1) {
           // check if head needs to be rev comped given a correct tail orientation (i.e. strands given are HEAD 3' < 5' TAIL 5' > 3')
           tailTemplateSeq = revcomp(tailTemplateSeq);
           midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
-          if(midMatchIndex === -1) {
+          if (midMatchIndex === -1) {
             //Now, we are very confident that there is no homology between the two sequences that wouldn't cause an illegal overhang.
             throw new Error("There are no valid homologous sequences at the ends of templates " + (index).toString() + " and " + (index + 1).toString())
           }
@@ -908,9 +908,9 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
     //Step 2.2.2. Find how many times TAIL anneals to HEAD.
     const tailAnnealCount = (headTemplateSeq.match(new RegExp(tailMidAnneal, "g")) || []).length;
     //Step 2.2.3. Verify that 5' homology region of TAIL only anneals to HEAD once, and generate index of anneal location. Otherwise, error.
-    if(tailAnnealCount === 1) {
+    if (tailAnnealCount === 1) {
       var tailMidAnnealIndex = headTemplateSeq.lastIndexOf(tailMidAnneal);
-    } else if(tailAnnealCount === 0) {
+    } else if (tailAnnealCount === 0) {
       throw new Error("Template #" + (index + 1).toString() + " has no homology to any previous templates.")
     } else {
       throw new Error("Template #" + (index + 1).toString() + " has 20bp homology to multiple templates; products will not SOE as desired.")
@@ -921,7 +921,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
     var tailAnnealSeq = tailTemplateSeq.slice(0, (headMidAnnealIndex + 15));
 
     //Step 2.4. Check to see if there is consensus as to what the homologous sequence is.
-    if(headAnnealSeq != tailAnnealSeq) {
+    if (headAnnealSeq != tailAnnealSeq) {
       throw new Error("There are no valid non overhanging homologous sequences at the ends of templates " + (index).toString() + " and " + (index + 1).toString())
     } else {
       //Step 2.5. If all is well, merge the sequences into a new var.
@@ -945,7 +945,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   //Step 3. Verify that headOligoSeq has minimum 18bp homology to 5' end of fusionTemplateSeq.
   var headAnneal = headOligoSeq.slice(-18);
   var headMatchIndex = fusionTemplateSeq.indexOf(headAnneal);
-  if(headMatchIndex === -1) {
+  if (headMatchIndex === -1) {
     throw new Error("Forward oligo does not exactly anneal to the first template")
   }
 
@@ -953,7 +953,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   var revTailOligoSeq = revcomp(tailOligoSeq);
   var tailAnneal = revTailOligoSeq.slice(0, 18);
   var tailMatchIndex = fusionTemplateSeq.lastIndexOf(tailAnneal);
-  if(tailMatchIndex === -1) {
+  if (tailMatchIndex === -1) {
     throw new Error("Reverse oligo does not exactly anneal to the last template")
   }
 
