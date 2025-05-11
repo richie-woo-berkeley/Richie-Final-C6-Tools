@@ -2,7 +2,7 @@
  * C6-Tools Synthetic Biology Functions for Google Apps Script
  * by J. Christopher Anderson with ChatGPT and Richie Woo
  *
- * Last modified: May 9, 2025
+ * Last modified: May 10, 2025
  *
  * Description: C6-Tools is a collection of pure functions for use in Google Sheets to automate the
  * design of synthetic biology experiments.

@@ -939,10 +939,10 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
     return fusionTemplateSeq
   }
 
-  //Step -1: Set headTemplateSeq
+  //Step 1: Set headTemplateSeq
   let headTemplateSeq = templateSeqs[0];
 
-  //Step 0. Loop over templates and join A to B, AB to C, ABC to D, infinitely and forever ad nauseam.
+  //Step 2. Loop over templates and join A to B, AB to C, ABC to D, infinitely and forever ad nauseam.
   for (let index = 1; index < templateSeqs.length; index++) {
     let tailTemplateSeq = templateSeqs[index];
     headTemplateSeq = SOEAnnealByHomology(headTemplateSeq, tailTemplateSeq, index);
@@ -960,7 +960,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   //Step 4. Verify that tailOligoSeq has minimum 18bp homology to 3' end of fusionTemplateSeq.
   var revTailOligoSeq = revcomp(tailOligoSeq);
   var tailAnneal = revTailOligoSeq.slice(0, 18);
-  var tailMatchIndex = fusionTemplateSeq.indexOf(tailAnneal);
+  var tailMatchIndex = fusionTemplateSeq.lastIndexOf(tailAnneal);
   if(tailMatchIndex === -1) {
     throw new Error("Reverse oligo does not exactly anneal to the last template")
   }
