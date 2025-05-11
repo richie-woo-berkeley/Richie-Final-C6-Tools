@@ -879,7 +879,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
       // Check if tail template sequence needs to be rev comped given a correct head orientation (i.e. strands given are HEAD 5' > 3' TAIL 3' < 5')
       tailTemplateSeq = revcomp(tailTemplateSeq);
       midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
-      if(midMatchIndex == -1) {
+      if(midMatchIndex === -1) {
         // check if head and tail are flip flopped (i.e. strands given are HEAD 3' < 5' TAIL 3' < 5')
         headTemplateSeq = revcomp(headTemplateSeq);
         midAnneal = headTemplateSeq.slice(-15);
