@@ -833,14 +833,6 @@ function digest(seq, enzymes, fragselect) {
  * The two template sequences must be designated either Head or Tail marking their position either 5' or 3' of the SOE joining site.
  * 
  * Terminology clarification: The "Head" template is the first template in the given list, and the "Tail" template is the last template in the given list.
- *
- * The template sequences referenced in this function must be products of two previous PCR reactions:
- * 1. PCR with a polynucleotide (PolyHead), an oligo matching at least 18bp near the 5' of Poly1 (Oligo-F), and another oligo matching 18bp near the 3' of Poly1 (Oligo-MF);
- * 2. PCR with a polynucleotide (PolyTail), an oligo matching at least 18bp near the 3' of Poly2 (Oligo-R), and another oligo matching 18bp near the 5' of Poly2 (Oligo-MR);
- * The following must be true of Oligo-F and Oligo-R:
- * 1. Their 3' ends must be complementary to a minimum of 18bp near the 5' end for Oligo-F and PolyHead and 3' end of PolyTail
- * The following must be true of Oligo-MF and Oligo-MR:
- * 1. There must be 18 bp homology between the oligo and the 3' end of PolyHead, and 18bp homology to the 5' end of PolyTail.
  * 
  * The algorithm is written assuming the forward and reverse oligos will bind to the 5' end of the head and 3' end of the tail respectively.
  * The algorithm is written assuming there are no overhanging sections of the head-tail template homology site, 3' for the head and 5' for the tail.
@@ -878,10 +870,10 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   }
 
   function SOEAnnealByHomology(headTemplateSeq, tailTemplateSeq, index) {
-    //Step 1. Verify that a minimum 20bp homology exists between the 3' end of HEAD and 5' end of TAIL.
+    //Step 1. Verify that a minimum 15bp homology exists between the 3' end of HEAD and 5' end of TAIL.
     //These checks should automatically rotate HEAD and TAIL to be in the correct orientations.
     //Correct orientation of strands should be (HEAD 5' > 3' TAIL 5' > 3')
-    var midAnneal = headTemplateSeq.slice(-20);
+    var midAnneal = headTemplateSeq.slice(-15);
     var midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
     if(midMatchIndex === -1) {
       // Check if tail template sequence needs to be rev comped given a correct head orientation (i.e. strands given are HEAD 5' > 3' TAIL 3' < 5')
@@ -890,7 +882,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
       if(midMatchIndex == -1) {
         // check if head and tail are flip flopped (i.e. strands given are HEAD 3' < 5' TAIL 3' < 5')
         headTemplateSeq = revcomp(headTemplateSeq);
-        midAnneal = headTemplateSeq.slice(-20);
+        midAnneal = headTemplateSeq.slice(-15);
         midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
         if(midMatchIndex === -1) {
           // check if head needs to be rev comped given a correct tail orientation (i.e. strands given are HEAD 3' < 5' TAIL 5' > 3')
@@ -898,7 +890,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
           midMatchIndex = tailTemplateSeq.indexOf(midAnneal);
           if(midMatchIndex === -1) {
             //Now, we are very confident that there is no homology between the two sequences that wouldn't cause an illegal overhang.
-            throw new Error("There are no valid homologous sequences at the ends of templates " + (index - 1).toString() + " and " + (index).toString())
+            throw new Error("There are no valid homologous sequences at the ends of templates " + (index).toString() + " and " + (index + 1).toString())
           }
         }
       }
@@ -907,32 +899,42 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
     //Step 2. Anneal the two template sequences using their homologies into one fusion sequence.
 
     //Step 2.1. Find the annealing regions of HEAD and TAIL.
-    var headMidAnneal = headTemplateSeq.slice(-20); //Although this is available as midAnneal above I want to regenerate it
-    var tailMidAnneal = tailTemplateSeq.slice(0, 19);
+    var headMidAnneal = headTemplateSeq.slice(-15); //Although this is available as midAnneal above I want to regenerate it
+    var tailMidAnneal = tailTemplateSeq.slice(0, 15);
 
     //Step 2.2. Find the indices of the positions where HEAD and TAIL anneal to each other.
+    //Step 2.2.1. Find where HEAD anneals to TAIL.
     var headMidAnnealIndex = tailTemplateSeq.indexOf(headMidAnneal);
-    var tailMidAnnealIndex = headTemplateSeq.lastIndexOf(tailMidAnneal);
-
+    //Step 2.2.2. Find how many times TAIL anneals to HEAD.
+    const tailAnnealCount = (headTemplateSeq.match(new RegExp(tailMidAnneal, "g")) || []).length;
+    //Step 2.2.3. Verify that 5' homology region of TAIL only anneals to HEAD once, and generate index of anneal location. Otherwise, error.
+    if(tailAnnealCount === 1) {
+      var tailMidAnnealIndex = headTemplateSeq.lastIndexOf(tailMidAnneal);
+    } else if(tailAnnealCount === 0) {
+      throw new Error("Template #" + (index + 1).toString() + " has no homology to any previous templates.")
+    } else {
+      throw new Error("Template #" + (index + 1).toString() + " has 20bp homology to multiple templates; products will not SOE as desired.")
+    }
+    
     //Step 2.3. Obtain the sequence of the annealing regions according to each respective template.
     var headAnnealSeq = headTemplateSeq.slice(tailMidAnnealIndex);
-    var tailAnnealSeq = tailTemplateSeq.slice(0, (headMidAnnealIndex + 20));
+    var tailAnnealSeq = tailTemplateSeq.slice(0, (headMidAnnealIndex + 15));
 
     //Step 2.4. Check to see if there is consensus as to what the homologous sequence is.
     if(headAnnealSeq != tailAnnealSeq) {
-      throw new Error("There are no valid non overhanging homologous sequences at the ends of templates " + (index - 1).toString() + " and " + (index).toString())
+      throw new Error("There are no valid non overhanging homologous sequences at the ends of templates " + (index).toString() + " and " + (index + 1).toString())
     } else {
       //Step 2.5. If all is well, merge the sequences into a new var.
-      var fusionTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 20))
+      var fusionTemplateSeq = headTemplateSeq + tailTemplateSeq.slice((headMidAnnealIndex + 15))
     }
 
     return fusionTemplateSeq
   }
 
-  //Step -1: Set headTemplateSeq
+  //Step 1: Set headTemplateSeq
   let headTemplateSeq = templateSeqs[0];
 
-  //Step 0. Loop over templates and join A to B, AB to C, ABC to D, infinitely and forever ad nauseam.
+  //Step 2. Loop over templates and join A to B, AB to C, ABC to D, infinitely and forever ad nauseam.
   for (let index = 1; index < templateSeqs.length; index++) {
     let tailTemplateSeq = templateSeqs[index];
     headTemplateSeq = SOEAnnealByHomology(headTemplateSeq, tailTemplateSeq, index);
@@ -950,7 +952,7 @@ function SOE(headOligoSeq, tailOligoSeq, templateSeqs) {
   //Step 4. Verify that tailOligoSeq has minimum 18bp homology to 3' end of fusionTemplateSeq.
   var revTailOligoSeq = revcomp(tailOligoSeq);
   var tailAnneal = revTailOligoSeq.slice(0, 18);
-  var tailMatchIndex = fusionTemplateSeq.indexOf(tailAnneal);
+  var tailMatchIndex = fusionTemplateSeq.lastIndexOf(tailAnneal);
   if(tailMatchIndex === -1) {
     throw new Error("Reverse oligo does not exactly anneal to the last template")
   }
