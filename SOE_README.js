@@ -6,7 +6,7 @@
  * 
  * Description: The SOE Function within C6-Sim is a function for use in Google Sheets that executes 
  * simulation of Splice by Overlap Extension PCR as described in the Construction File (CF) specification 
- * (Ataii et al., 2023), including check mechanisms to detect multiple anneal sites by templates and 
+ * (Ataii et al. 2023), including check mechanisms to detect multiple anneal sites by templates and 
  * automatic rotation of templates.
  * 
  * The algorithm accepts the following inputs:
@@ -17,7 +17,7 @@
  * @param {array} templateSeqs - A list of template sequences which will be joined in the order given in 
  *  the construction file according to their homology sites.
  * 
- * Note: 5' of tailOligoSeq must be complementary to the 3' of the last template in templateSeqs, and the 
+ * Note 1: 5' of tailOligoSeq must be complementary to the 3' of the last template in templateSeqs, and the 
  * 3' of headOligoSeq must be homologous to the 5' of the first template in templateSeqs, respecting the 
  * actual oligo sequences needed to achieve PCR and following the standard set by the PCR function. 
  * However, the algorithm is tolerant of and will accept templates in templateSeqs that are reverse 
@@ -28,6 +28,12 @@
  * be used in a real-world experiment, but it is acceptable to provide templates of opposite reading 
  * directions because they would be accompanied by a strand of the correct reading direction in a real 
  * experiment.
+ * 
+ * Note 2: The minimum homology ("overlap" per the article's specific terminology) suggested by Luo et al. 
+ * in their 2013 paper is 15bp to control melting temperature (Tm) within 68-70C. The maximum optimal 
+ * homology overlap is 30bp to prevent an excessively high Tm, but a restriction on this has not been 
+ * included in this iteration of the SOE algorithm to provide the maximum use case/functionality for end 
+ * users, who may desire to use the algorithm alternatively.
  * 
  * The algorithm follows the following steps:
  * 1. The algorithm attempts to join the first template to the second template, the fusion of the two 
@@ -102,12 +108,32 @@
  * retain these examples for the tools to function properly; the Sheets can be deleted. The header comments
  * for each function also include more technical information about their respective APIs.
  * 
- * Limitations: Due to limitations in the Google Apps Script environment, these functions may be slower 
+ * Limitations: 
+ * 
+ * - Due to limitations in the Google Apps Script environment, these functions may be slower 
  * than equivalent functions running natively on a local computer. The degree of testing is uneven
  * across this project, so beware that there may be bugs and major errors.
+ * 
+ * - Similar to the PCR function, the SOE function does not check for potential homology by the TAIL strand
+ * outside of the desired 5' homology site to locations in the HEAD strand that are not the desired 
+ * homology site at the 3' location. Therefore, the simulator may only predict the ideal product in 
+ * situations where there may be multiple erroneous products produced by unintended homology sites.
+ * Theoretically, unintended novel sequences should only occur if there is homology to HEAD at the 3' end 
+ * of TAIL. Homology inside the TAIL sequence with the HEAD sequence will create floating unpaired ends
+ * that prevent further PCR.
  *
  * Contact: For questions or feedback on C6-Tools SOE Function, contact Richie Woo at:
  * richie.woo@berkeley.edu
+ * 
+ * Citations:
+ * 
+ * Luo WG, Liu HZ, Lin WH, Kabir MH, Su Y. Simultaneous splicing of multiple DNA fragments in one PCR 
+ *  reaction. Biol Proced Online. 2013 Sep 9;15(1):9. doi: 10.1186/1480-9222-15-9. PMID: 24015676; 
+ *  PMCID: PMC3847634.
+ * 
+ * Ataii N, Bakshi S, Chen Y, Fernandez M, Shao Z, Scheftel Z, et al. (2023) Enabling AI in synthetic 
+ *  biology through Construction File specification. PLoS ONE 18(11): e0294469. 
+ *  https://doi.org/10.1371/journal.pone.0294469
  * 
  * Copyright 2025 University of California, Berkeley
  * 
